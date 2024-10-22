@@ -1,5 +1,6 @@
 package com.bohunapps.natifegifsapp.utils
 
+import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.bohunapps.natifegifsapp.data.retrofit.GifsApiService

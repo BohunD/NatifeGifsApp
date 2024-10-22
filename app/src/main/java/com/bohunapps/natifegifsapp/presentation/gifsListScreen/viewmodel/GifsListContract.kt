@@ -16,11 +16,11 @@ interface GifsListContract {
         val currentQuery: String = "",
         val showGif: Boolean = false,
         val selectedGif: GifImage?=null,
-        val isOffline: Boolean = false
+        val isOffline: Boolean?=null
     )
 
     sealed interface Event{
-        data object SearchGifs: Event
+        data object GetGifs: Event
         data class SetQuery(val query: String): Event
         data class BanGif(val gif: GifImage): Event
         data class RemoveGifFromSaved(val gif: GifImage): Event

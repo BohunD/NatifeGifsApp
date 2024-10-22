@@ -83,8 +83,8 @@ class GifRepositoryImpl @Inject constructor(
                     inputStream.copyTo(outputStream)
                 }
             }
-
         } catch (e: Exception) {
+
             e.printStackTrace()
         }
     }
@@ -107,7 +107,7 @@ class GifRepositoryImpl @Inject constructor(
             val savedGifs = context.filesDir.listFiles()?.mapNotNull { file ->
                 if (file.extension == "gif") {
                     val gifId = file.nameWithoutExtension
-                    GifImage(gifId, Images(Original(file.toUri().toString())))
+                    GifImage(gifId, Images(Original(file.absolutePath.toString())))
                 } else {
                     null
                 }

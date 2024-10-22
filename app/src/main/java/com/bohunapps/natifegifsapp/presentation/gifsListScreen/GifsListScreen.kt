@@ -35,11 +35,14 @@ import com.bohunapps.natifegifsapp.presentation.gifsListScreen.viewmodel.GifView
 import com.bohunapps.natifegifsapp.presentation.gifsListScreen.viewmodel.GifsListContract
 import com.bohunapps.natifegifsapp.presentation.util.ImageLoadingManager
 import com.bohunapps.natifegifsapp.ui.mvi.use
+import java.io.File
 import java.lang.Error
 
 @Composable
-fun GifsListScreenRoute(onGifClicked: (GifImage) -> Unit) {
-    val viewModel: GifViewModel = hiltViewModel()
+fun GifsListScreenRoute(
+    viewModel: GifViewModel,
+    onGifClicked: (GifImage) -> Unit,
+) {
     val (state, event) = use(viewModel)
     GifsListScreen(state, event, onGifClicked = { onGifClicked(it) })
 }
@@ -55,7 +58,9 @@ fun GifsListScreen(
         SearchBar(state.currentQuery) {
             event(GifsListContract.Event.SetQuery(it))
         }
-        GifList(gifs, event, onGifClicked = { onGifClicked(it) })
+        GifList(gifs, event, onGifClicked = {
+            onGifClicked(it)
+        })
     }
 }
 
@@ -77,33 +82,31 @@ fun GifList(
     onGifClicked: (GifImage) -> Unit,
 ) {
     gifs?.let {
-        LazyVerticalGrid(
-            modifier = Modifier.fillMaxSize(),
-            columns = GridCells.Fixed(2)
-        ) {
-            items(
-                count = gifs.itemCount,
-            ) { index ->
-                gifs[index]?.let { gif ->
-                    GifItem(
-                        gif = gif,
-                        onClick = {
-                            onGifClicked(it)
-                            event(GifsListContract.Event.SetFullGifVisibility(true));
-                            event(
-                                GifsListContract.Event.SelectGif(it)
-                            )
+        Box(modifier = Modifier.fillMaxSize()) {
 
-                        },
-                        onDelete = { event(GifsListContract.Event.BanGif(it)) },
-                        onSave = {
-                            event(GifsListContract.Event.SaveGif(it))
-                        },
-                        onError = { event(GifsListContract.Event.RemoveGifFromSaved(it)) }
-                    )
+            LazyVerticalGrid(
+                modifier = Modifier.fillMaxSize(),
+                columns = GridCells.Fixed(3)
+            ) {
+                items(
+                    count = gifs.itemCount,
+                ) { index ->
+                    gifs[index]?.let { gif ->
+                        GifItem(
+                            gif = gif,
+                            onClick = {
+                                onGifClicked(it)
+                            },
+                            onDelete = { event(GifsListContract.Event.BanGif(it)) },
+                            onSave = {
+                                event(GifsListContract.Event.SaveGif(it))
+                            },
+                            onError = { event(GifsListContract.Event.RemoveGifFromSaved(it)) }
+                        )
+                    }
                 }
+                item { HandleLoadState(gifs) }
             }
-            item { HandleLoadState(gifs) }
         }
     }
 }
@@ -111,13 +114,10 @@ fun GifList(
 @Composable
 fun HandleLoadState(gifs: LazyPagingItems<GifImage>) {
     gifs.apply {
-        when {
-            loadState.refresh is LoadState.Error -> {
-                ShowErrorToast(stringResource(R.string.can_not_refresh_check_your_internet_connection))
-            }
-
-            loadState.append is LoadState.Loading -> LoadingIndicator()
-            loadState.append is LoadState.Error -> ShowErrorToast(stringResource(R.string.can_not_load_more_check_your_internet_connection))
+        when (loadState.append) {
+            is LoadState.Loading -> LoadingIndicator()
+            is LoadState.Error -> ShowErrorToast(stringResource(R.string.can_not_load_more_check_your_internet_connection))
+            is LoadState.NotLoading -> {}
         }
     }
 }
@@ -152,6 +152,7 @@ fun GifItem(
     onError: (GifImage) -> Unit,
     onSave: (GifImage) -> Unit,
 ) {
+
     Box(
         Modifier
             .padding(4.dp)
@@ -162,31 +163,24 @@ fun GifItem(
         contentAlignment = Alignment.Center
     ) {
         val context = LocalContext.current
-        val imageRequest = ImageLoadingManager.getRequest(
-            context,
-            gif.images.original.url,
-            onError = {
-                onError(gif)
-            },
-            onSuccess = {
-                onSave(gif)
-            },
-
+        val imageRequest =
+            ImageLoadingManager.getRequest(
+                context,
+                gif.images.original.url,
+                onError = { onError(gif) },
+                onSuccess = { onSave(gif) }
             )
+
         val imageLoader = ImageLoadingManager.getLoader(context)
         AsyncImage(
             model = imageRequest,
             imageLoader = imageLoader,
             contentDescription = "GIF",
-            error = painterResource(id = R.drawable.ic_error),
             modifier = Modifier
-                .fillMaxHeight()
-                .fillMaxWidth(1f)
-                .clip(RoundedCornerShape(14.dp))
-                .clickable {
-                    onClick(gif)
-                },
-            contentScale = ContentScale.Crop
+                .fillMaxSize()
+                .clickable { onClick(gif) },
+            contentScale = ContentScale.Crop,
+            error = painterResource(id = R.drawable.ic_error),
         )
         Box(
             modifier = Modifier

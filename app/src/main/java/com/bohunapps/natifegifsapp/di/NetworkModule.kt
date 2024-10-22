@@ -3,6 +3,7 @@ package com.bohunapps.natifegifsapp.di
 import android.content.Context
 import android.util.Log
 import com.bohunapps.natifegifsapp.data.retrofit.GifsApiService
+import com.bohunapps.natifegifsapp.presentation.util.NetworkMonitor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -53,6 +54,13 @@ object NetworkModule {
     @Singleton
     fun provideGifApiService(retrofit: Retrofit): GifsApiService {
         return retrofit.create(GifsApiService::class.java)
+    }
+
+
+    @Provides
+    @Singleton
+    fun provideNetworkMonitor(@ApplicationContext context: Context): NetworkMonitor {
+        return NetworkMonitor(context)
     }
 
     @Provides
